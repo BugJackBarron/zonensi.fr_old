@@ -1,10 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+
+    <title>{% block Titre %}ZoneNSI.fr{% endblock %}</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
 </head>
-<body>
+<body class = "w3-container w3-blue-gray">
+    <header class="w3-row">
+        {% block header %}
+            <div class="w3-quarter">
+                <div class="w3-middle">
+                    <a href="{{ url_for('index')}}"><img width="80%" src="{{ url_for('static',filename='logo.png') }}" alt="Zonensi.fr">
+                    </a>
+                </div>
+            </div>
+            <div class="w3-half">
+            <p class="w3-center">"Toute technologie suffisamment avancée est indiscernable de la magie."</p>
+            <p class = "w3-center"">Arthur C. Clarke</p>
+            </div>
+            <div class="w3-quarter">
+                <p class="w3-center">{%block login%}Non connecté{% endblock %}</p>
+                <p class="w3-center">Recherche :</p>
+
+            </div>
+        {% endblock %}
+    </header>
+    <div>
+        {% block contenu %}
+        {% endblock %}
+    </div>
+    <sidebar
+        {% block sidebar %}
+        {% endblock %}
+
+    </sidebar>
+
 
 </body>
 </html>
