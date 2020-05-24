@@ -52,3 +52,11 @@
 {color:#000;background-color:#bdc3c7}
 .w3-flat-asbestos
 {color:#fff;background-color:#7f8c8d}
+
+.editor-toolbar a {
+    color:#f1c40f!important;
+}
+
+.entete{
+    position: fixed!important;
+}

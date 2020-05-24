@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+    {% block head %}
     <meta charset="UTF-8">
 
     <title>{% block Titre %}ZoneNSI.fr{% endblock %}</title>
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='w3.css')  }}">
 {#    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-flat.css">#}
-    <link rel="stylesheet" href="{{url_for('static',filename='Couleurs_Perso.css')}}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="{{url_for('static',filename='Couleurs_Perso.css')}}">
 
+    {%  endblock %}
 </head>
 <body class = "w3-container w3-flat-wet-asphalt  w3-flat-sun-flower-txt">
-    <header class="w3-row">
+
+    <header class="w3-row ">
         {% block header %}
             <div class="w3-quarter">
                 <div class="w3-middle">
@@ -32,7 +36,6 @@
 
             </div>
         {% endblock %}
-    </header>
     <navbar class="w3-container ">
         {%  block navbar %}
             <div class="w3-bar w3-border w3-border-belize-hole w3-round-xxlarge">
@@ -82,6 +85,8 @@
             </div>
         {% endblock %}
     </navbar>
+    </header>
+
     <div class="w3-container">
         <div class="w3-container w3-border w3-flat-wet-asphalt w3-round-xxlarge w3-border-belize-hole w3-threequarter" style ="height:100%;overflow:auto">
             {% block contenu %}
@@ -92,10 +97,11 @@
             {% endblock %}
         </sidebar>
     </div>
-    <footer>
+    {#<footer>
         <p class="w3-bottom ">Avec Python, Flask, w3-css. Hébergé par Gandi. <img  height="20px" src="{{ url_for('static',filename='by-nc-sa.eu.png') }}"/> 2020, Zonensi.fr</p>
-    </footer>
-
+    </footer>#}
+    {% block scripts %}
+    {% endblock %}
 </body>
 </html>
 
