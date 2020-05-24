@@ -5,9 +5,12 @@
 
     <title>{% block Titre %}ZoneNSI.fr{% endblock %}</title>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+{#    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-flat.css">#}
+    <link rel="stylesheet" href="{{url_for('static',filename='Couleurs_Perso.css')}}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 </head>
-<body class = "w3-container w3-blue-gray">
+<body class = "w3-container w3-flat-wet-asphalt  w3-flat-sun-flower-txt">
     <header class="w3-row">
         {% block header %}
             <div class="w3-quarter">
@@ -18,25 +21,88 @@
             </div>
             <div class="w3-half">
             <p class="w3-center">"Toute technologie suffisamment avancée est indiscernable de la magie."</p>
-            <p class = "w3-center"">Arthur C. Clarke</p>
+            <p class = "w3-center ">Arthur C. Clarke</p>
             </div>
             <div class="w3-quarter">
                 <p class="w3-center">{%block login%}Non connecté{% endblock %}</p>
-                <p class="w3-center">Recherche :</p>
+                <form>
+                    <p class="w3-center"><input name="search"/><button type="submit"><i class="fa fa-search"></i></button></p>
+                </form>
+
 
             </div>
         {% endblock %}
     </header>
-    <div>
-        {% block contenu %}
+    <navbar class="w3-container ">
+        {%  block navbar %}
+            <div class="w3-bar w3-border w3-border-belize-hole w3-round-xxlarge">
+               <div class="w3-bar-item w3-dropdown-hover">
+                    <a href="{{ url_for('index') }}"> <button  class="w3-button w3-hover-amethyst w3-round-xxlarge">Accueil</button></a>
+               </div>
+               <div class="w3-bar-item w3-dropdown-hover">
+                   <button class="w3-button w3-hover-amethyst">Maths</button>
+                   <div class="w3-dropdown-content w3-bar-block w3-border w3-round-xxlarge">
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst ">Seconde</a>
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Première G</a>
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Terminale G</a>
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Première STMG</a>
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Terminale STMG</a>
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Maths Complémentaires</a>
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Maths Expertes</a>
+                       <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Culture Mathématique</a>
+                   </div>
+               </div>
+               <div class="w3-bar-item w3-dropdown-hover">
+                    <a href="{{ url_for('index') }}"> <button  class="w3-bar-item  w3-button w3-hover-amethyst w3-round-xxlarge">SNT</button></a>
+               </div>
+                <div class="w3-bar-item w3-dropdown-hover w3-middle">
+                    <button class="w3-button w3-hover-amethyst w3-round-xxlarge">NSI</button>
+                    <div class="w3-dropdown-content w3-bar-block w3-border">
+                        <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Première G</a>
+                        <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Terminale G</a>
+                        <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Culture Informatique</a>
+                    </div>
+                </div>
+                <div class="w3-bar-item w3-dropdown-hover">
+                    <a href="" class="w3-bar-item w3-button w3-hover-amethyst w3-round-xxlarge">Enseignement scientifique</a>
+                </div>
+                <div class="w3-bar-item w3-dropdown-hover">
+                    <button class="w3-button w3-hover-amethyst w3-round-xxlarge">Miscellanées</button>
+                    <div class="w3-dropdown-content w3-bar-block w3-border">
+                        <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Python</a>
+                        <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Web</a>
+                        <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Linux</a>
+                        <a href="#" class="w3-bar-item w3-button w3-hover-amethyst">Réseaux</a>
+
+                    </div>
+                </div>
+                <div class="w3-bar-item w3-dropdown-hover w3-right ">
+                    <a class="w3-bar-item w3-button w3-hover-amethyst w3-round-xxlarge" href="https://zonensi.fr:8443">JupyterHub</a>
+                </div>
+            </div>
         {% endblock %}
+    </navbar>
+    <div class="w3-container">
+        <div class="w3-container w3-border w3-flat-wet-asphalt w3-round-xxlarge w3-border-belize-hole w3-threequarter" style ="height:100%;overflow:auto">
+            {% block contenu %}
+            {% endblock %}
+        </div>
+        <sidebar class="w3-container w3-border w3-border-belize-hole w3-right w3-sidebar w3-bar-block w3-flat-wet-asphalt w3-round-xxlarge w3-quarter" style="right:0">
+            {% block sidebar %}
+            {% endblock %}
+        </sidebar>
     </div>
-    <sidebar
-        {% block sidebar %}
-        {% endblock %}
-
-    </sidebar>
-
+    <footer>
+        <p class="w3-bottom ">Avec Python, Flask, w3-css. Hébergé par Gandi. <img  height="20px" src="{{ url_for('static',filename='by-nc-sa.eu.png') }}"/> 2020, Zonensi.fr</p>
+    </footer>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
