@@ -14,13 +14,20 @@
         <p class="w3-flat-sun-flower-txt">
             {{ form.title.label }}{{ form.title(size=32) }}
         </p>
-        <p>
-            {{ form.course.label }}{{ form.course() }}
-        </p>
+        <div class="w3-bar">
+            <div class="w3-bar-item">
+                {{ form.course.label }}{{ form.course() }}
+            </div>
+            {#<div class="w3-bar-item">
+                {{ form.category.label }}{{ form.category() }}
+            </div>
+            <div class="w3-bar-item">
+                {{ form.subcategory.label }}{{ form.subcategory() }}
+            </div>#}
+        </div>
         </div>
         <p class="w3-flat-sun-flower-txt">
             {{ form.content() }}
-
         </p>
         <input type="submit" value="Valider"/>
 
@@ -36,22 +43,44 @@
             element: document.getElementById("content")
         });
     </script>
+     <script src="http://code.jquery.com/jquery.js"></script>
+<script>
+    {# $(document).ready(function() {
 
-    <script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_CHTML"></script>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-tex2jax: {
-inlineMath: [['$','$'], ['\\(','\\)']],
-processEscapes: true},
-jax: ["input/TeX","input/MathML","input/AsciiMath","output/CommonHTML"],
-extensions: ["tex2jax.js","mml2jax.js","asciimath2jax.js","MathMenu.js","MathZoom.js","AssistiveMML.js", "[Contrib]/a11y/accessibility-menu.js"],
-TeX: {
-extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"],
-equationNumbers: {
-autoNumber: "AMS"
-}
-}
-});
+    $( "#course" ).change(function() {
+        var course_selected=$(this).val();
+
+        req = $.ajax({
+            url : '/update_addpost',
+            type : 'POST',
+            data : { course : course_selected }
+        });
+
+    }); #}
+
+    {#$('#').on('click', function() {
+
+        var member_id = $(this).attr('member_id');
+
+        var name = $('#nameInput'+member_id).val();
+        var email = $('#emailInput'+member_id).val();
+
+        req = $.ajax({
+            url : '/update',
+            type : 'POST',
+            data : { name : name, email : email, id : member_id }
+        });
+
+        req.done(function(data) {
+
+            $('#memberSection'+member_id).fadeOut(1000).fadeIn(1000);
+            $('#memberNumber'+member_id).text(data.member_num);
+
+        });
+
+
+    });
+
+});#}
 </script>
 {% endblock %}

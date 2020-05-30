@@ -28,7 +28,15 @@
             <p class = "w3-center ">Arthur C. Clarke</p>
             </div>
             <div class="w3-quarter">
-                <p class="w3-center">{%block login%}Non connecté{% endblock %}</p>
+                <p class="w3-center">{%block login%}
+                   {% if current_user.is_authenticated %}
+                        <p class=""> {{ current_user.login }}
+                        <a class="" href="{{ url_for('logout')}}"> Déconnexion</a></p>
+
+                    {% else %}
+                        <a class="w3-bar-item w3-button w3-right" href="{{ url_for('login')}}">Connexion</a>
+                    {% endif %}
+                {% endblock %}</p>
                 <form>
                     <p class="w3-center"><input name="search"/><button type="submit"><i class="fa fa-search"></i></button></p>
                 </form>
