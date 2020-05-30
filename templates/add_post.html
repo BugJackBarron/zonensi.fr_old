@@ -15,20 +15,27 @@
             {{ form.title.label }}{{ form.title(size=32) }}
         </p>
         <div class="w3-bar">
-            <div class="w3-bar-item">
+            <div class="w3-bar-item w3-flat-sun-flower-txt">
                 {{ form.course.label }}{{ form.course() }}
             </div>
-            {#<div class="w3-bar-item">
+            <div class="w3-bar-item w3-flat-sun-flower-txt">
                 {{ form.category.label }}{{ form.category() }}
             </div>
-            <div class="w3-bar-item">
+            <div class="w3-bar-item w3-flat-sun-flower-txt">
                 {{ form.subcategory.label }}{{ form.subcategory() }}
-            </div>#}
+            </div>
+
         </div>
         </div>
         <p class="w3-flat-sun-flower-txt">
             {{ form.content() }}
         </p>
+        <div class="w3-flat-sun-flower-txt">
+            {{ form.Images.label }}{{ form.Images() }}
+        </div>
+        {% if form.errors %}
+{{ form.errors }}
+{% endif %}
         <input type="submit" value="Valider"/>
 
     </form>
@@ -45,42 +52,73 @@
     </script>
      <script src="http://code.jquery.com/jquery.js"></script>
 <script>
-    {# $(document).ready(function() {
+    $(document).ready(function() {
+        $('#category').empty().append($('<option>', {
+                        value: 'none',
+                        text : 'None'
+                    }));
+        $('#category').prop('disabled','disabled');
+        $('#subcategory').empty().append($('<option>', {
+                        value: 'none',
+                        text : 'None'
+                    }));
+        $('#subcategory').append($('<option>', {
+                        value: 'new',
+                        text : 'New'
+                    }));
+        $('#subcategory').prop('disabled','disabled');
 
-    $( "#course" ).change(function() {
-        var course_selected=$(this).val();
+        $("#course").change(function () {
+            var course_selected = $(this).val();
+                req = $.ajax({
+                url: '/update_addpost',
+                type: 'POST',
+                data: {course: course_selected}
+            })
+            .done(function(data){
+                $('#category').prop('disabled',false);
+                $('#category').empty().append($('<option>', {
+                        value: 'None',
+                        text : 'None'
+                    }));
 
-        req = $.ajax({
-            url : '/update_addpost',
-            type : 'POST',
-            data : { course : course_selected }
+                $.each(data, function (i, item) {
+                    $('#category').append($('<option>', {
+                        value: i,
+                        text : item
+                    }));
+                });
+            });
         });
 
-    }); #}
-
-    {#$('#').on('click', function() {
-
-        var member_id = $(this).attr('member_id');
-
-        var name = $('#nameInput'+member_id).val();
-        var email = $('#emailInput'+member_id).val();
-
-        req = $.ajax({
-            url : '/update',
-            type : 'POST',
-            data : { name : name, email : email, id : member_id }
+        $("#category").change(function () {
+            var category_selected = $(this).val();
+                req = $.ajax({
+                url: '/update_addpost',
+                type: 'POST',
+                data: {category: category_selected}
+            })
+            .done(function(data){
+                console.log(data);
+                $('#subcategory').prop('disabled',false);
+                $('#subcategory').empty().append($('<option>', {
+                        value: 'None',
+                        text : 'None'
+                    }));
+                $('#subcategory').append($('<option>', {
+                        value: 'new',
+                        text : 'New'
+                    }));
+                $.each(data, function (i, item) {
+                    $('#subcategory').append($('<option>', {
+                        value: i,
+                        text : item
+                    }));
+                });
+            });
         });
-
-        req.done(function(data) {
-
-            $('#memberSection'+member_id).fadeOut(1000).fadeIn(1000);
-            $('#memberNumber'+member_id).text(data.member_num);
-
-        });
-
-
     });
 
-});#}
+
 </script>
 {% endblock %}

@@ -1,14 +1,15 @@
-from flask import Flask,render_template,url_for,request,session,redirect,flash
+from flask import Flask,render_template,url_for,request,session,redirect,flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
 from flask_wtf import FlaskForm
 from flask_login import LoginManager,UserMixin,login_user,login_required,current_user,logout_user
-from wtforms import StringField, PasswordField, SubmitField, SelectField,widgets, HiddenField, TextAreaField
-from wtforms.validators import DataRequired, length, InputRequired, EqualTo
+from wtforms import StringField, PasswordField, SubmitField, SelectField,widgets, HiddenField, TextAreaField, MultipleFileField
+from wtforms.validators import DataRequired, length, InputRequired, EqualTo, Optional
 from flask_admin import Admin, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 import datetime
 from flaskext.markdown import Markdown
+
 
 from werkzeug import security
 
@@ -47,6 +48,9 @@ class Categories(db.Model) :
     idg = db.Column(db.Integer,primary_key=True)
     idd = db.Column(db.Integer,primary_key=True)
 
+    def __lt__(self, other):
+        return self.idg<other.idg
+
 
 ###________________FORMULAIRES WTFORMS______________________________###
 
@@ -56,14 +60,23 @@ class LoginForm(FlaskForm):
 
 class PostForm(FlaskForm):
     title = StringField('Titre', validators=[DataRequired()])
-    course = SelectField('Matière', choices=[ ('maths','Mathématiques'),
-                                                        ('nsi', 'NSI'),
-                                                        ('snt', 'SNT'),
-                                                        ('esci', 'Ens. Sci.'),
-                                                        ('misc', 'Misc')],
-                        default = 'maths')
-    #category = SelectField('category', choices=[])
-    #subcategory = SelectField('chapter', choices=[('new','New')])
+    #peuplement des valeurs possibles des sélections,
+    # nécessaires pour utilisation de validate_on_submit
+    courses = Categories.query.filter_by(parent=1).all()
+    courses_choices = sorted([(c.little_name,c.real_name) for c in courses])
+    course = SelectField('Rubrique', choices=courses_choices)
+
+    Id_Courses=[c.idg for c in courses]
+    categories = Categories.query.filter(Categories.parent.in_(Id_Courses)).all()
+    categories_choices = sorted([(c.little_name, c.real_name) for c in categories])
+    category = SelectField('category', choices=[('none','None')]+categories_choices,default = 'none',validators=[Optional()])
+
+    Id_Categories = [c.idg for c in categories]
+    subcategories = Categories.query.filter(Categories.parent.in_(Id_Categories)).all()
+    subcategories_choices = sorted([(c.little_name, c.real_name) for c in subcategories])
+    subcategory = SelectField('subcategory', choices=[('none','None'),('new','New')]+subcategories_choices,default = 'none',validators=[Optional()])
+
+    Images = MultipleFileField('Images')
     content = TextAreaField("Contenu")
 
 
@@ -99,39 +112,64 @@ def load_user(id):
 @app.route('/')
 def index():
 
-    return render_template('squelette.html')
+    return render_template('squelette.html',cats=get_child("Root"))
 
 
 @app.route('/addpost', methods=['GET','POST'])
 @login_required
 def add_post():
     form=PostForm()
-    print("par la")
+
     if form.validate_on_submit() :
+        print(form.course.data)
+        print(form.category.data)
+        print(form.subcategory.data)
         post=BlogPost(title=form.title.data,
                       course=form.course.data,
+                      category=form.category.data,
+                      subcategory= form.subcategory.data,
                       content=form.content.data,
                       date=datetime.datetime.now())
         print('ok')
         db.session.add(post)
         db.session.commit()
-        #return redirect(url_for('index'))
+
         post=BlogPost.query.filter_by(title=form.title.data).first()
         return redirect(url_for('view_post',post_id=post.id_post))
     else :
+
         print("Ben non")
-        return render_template('add_post.html',form=form)
+        print(form.course.data)
+        print(form.category.data)
+        print(form.subcategory.data)
+        return render_template('add_post.html',form=form,cats=get_child("Root"))
 
 @app.route('/update_addpost',methods=['POST'])
 def update_addpost():
-    if request.form['course'] :
-        course=request.form['course']
-
+    if 'course' in request.form.keys():
+        course = request.form['course']
+        id_course = Categories.query.filter_by(little_name=course).first()
+        print(f"{id_course.idg}")
+        cats = Categories.query.filter_by(parent=id_course.idg).all()
+        rep={}
+        for c in cats :
+            rep[c.little_name]=c.real_name
+        return jsonify(rep)
+    elif request.form['category'] :
+        category = request.form['category']
+        id_category = Categories.query.filter_by(little_name=category).first()
+        subcats = Categories.query.filter_by(parent=id_category.idg).all()
+        rep = {}
+        for c in subcats:
+            rep[c.little_name] = c.real_name
+        return jsonify(rep)
+    else :
+        return jsonify({'error' : 'Une erreur est survenue'})
     
 @app.route('/viewpost/<int:post_id>')
 def view_post(post_id):
     post=BlogPost.query.filter_by(id_post=post_id).first()
-    return render_template('one_post.html', post=post)
+    return render_template('one_post.html', post=post,cats=get_child("Root"))
 
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -146,13 +184,21 @@ def login():
                 else :
                     return redirect(url_for('index'))
             flash(u'La combinaison login/mot de passe est inconnue!')
-    return render_template("login.html",form=form)
+    return render_template("login.html",form=form,cats=get_child("Root"))
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.template_filter('getchild')
+def get_child(r) :
+    parent=Categories.query.filter_by(real_name=r).first()
+    cats = Categories.query.filter_by(parent=parent.idg).all()
+    return [c.real_name for c in sorted(cats)]
+
 
 if __name__ == '__main__':
     app.run(debug=True)
