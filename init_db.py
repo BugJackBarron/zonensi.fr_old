@@ -1,6 +1,7 @@
 from app import db, User, Categories
 import os
 
+
 if os.path.exists('static/zonensidb.sqlite3'):
     os.remove('static/zonensidb.sqlite3')
 db.create_all()
@@ -31,6 +32,11 @@ course = [('maths', 'Mathématiques'), ('snt', 'SNT'), ('nsi', 'NSI'), ('enssci'
 
 for ln, rn in course[::-1]:
     add_category(ln, rn)
+    if not (os.path.exists(f"static/upload/{ln}")):
+        try:
+            os.mkdir(f"static/upload/{ln}")
+        except:
+            raise IOError
 
 num = Categories.query.filter_by(little_name="maths").first().idg
 cat = [('2de', 'Seconde'), ('1ereG', 'Première Générale'), ('TleG', 'Terminale Générale'),
@@ -39,22 +45,42 @@ cat = [('2de', 'Seconde'), ('1ereG', 'Première Générale'), ('TleG', 'Terminal
        ('cultmath', 'Culture Mathématique')]
 for ln, rn in cat[::-1]:
     add_category(ln, rn, parent=num)
+    if not (os.path.exists(f"static/upload/maths/{ln}")):
+        try:
+            os.mkdir(f"static/upload/maths/{ln}")
+        except:
+            raise IOError
 
 num = Categories.query.filter_by(little_name="nsi").first().idg
 cat = [('1ereG', 'Première Générale'), ('TleG', 'Terminale Générale'), ('cultinfo', 'Culture Informatique')]
 for ln, rn in cat[::-1]:
     add_category(ln, rn, parent=num)
+    if not (os.path.exists(f"static/upload/nsi/{ln}")):
+        try:
+            os.mkdir(f"static/upload/nsi/{ln}")
+        except:
+            raise IOError
 
 num = Categories.query.filter_by(little_name="misc").first().idg
 cat = [('python', 'Python'), ('web', 'Web'), ('reseaux', 'Réseaux'),('linux','Linux')]
 for ln, rn in cat[::-1]:
     add_category(ln, rn, parent=num)
+    if not (os.path.exists(f"static/upload/misc/{ln}")):
+        try:
+            os.mkdir(f"static/upload/misc/{ln}")
+        except:
+            raise IOError
 
 
 num = Categories.query.filter_by(little_name="2de").first().idg
 cat = [('C01', 'C01'), ('C02', 'C02'), ('C03', 'C03')]
 for ln, rn in cat[::-1]:
     add_category(ln, rn, parent=num)
+    if not (os.path.exists(f"static/upload/maths/2de/{ln}")):
+        try:
+            os.mkdir(f"static/upload/maths/2de/{ln}")
+        except:
+            raise IOError
 
 
 def find_children(idg):

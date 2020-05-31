@@ -6,9 +6,20 @@
 {%  endblock %}
 
 {% block contenu %}
-    <form action="" method="POST"><div class="w3-container w3-flat-sun-flower-txt">
+    <form action="" method="POST" enctype="multipart/form-data"><div class="w3-container w3-flat-sun-flower-txt">
         <h2>Nouveau Post</h2>
         </div>
+
+        {% if form.errors %}
+            <ul class="errors">
+            {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+                {% for error in field_errors %}
+                    <li class="w3-flat-amethyst">{{ form[field_name].label }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            </ul>
+        {% endif %}
+
         <div class="w3-center">
         {{ form.csrf_token }}
         <p class="w3-flat-sun-flower-txt">
@@ -33,9 +44,7 @@
         <div class="w3-flat-sun-flower-txt">
             {{ form.Images.label }}{{ form.Images() }}
         </div>
-        {% if form.errors %}
-{{ form.errors }}
-{% endif %}
+
         <input type="submit" value="Valider"/>
 
     </form>
@@ -62,10 +71,6 @@
                         value: 'none',
                         text : 'None'
                     }));
-        $('#subcategory').append($('<option>', {
-                        value: 'new',
-                        text : 'New'
-                    }));
         $('#subcategory').prop('disabled','disabled');
 
         $("#course").change(function () {
@@ -78,7 +83,7 @@
             .done(function(data){
                 $('#category').prop('disabled',false);
                 $('#category').empty().append($('<option>', {
-                        value: 'None',
+                        value: 'none',
                         text : 'None'
                     }));
 
@@ -102,13 +107,10 @@
                 console.log(data);
                 $('#subcategory').prop('disabled',false);
                 $('#subcategory').empty().append($('<option>', {
-                        value: 'None',
+                        value: 'none',
                         text : 'None'
                     }));
-                $('#subcategory').append($('<option>', {
-                        value: 'new',
-                        text : 'New'
-                    }));
+
                 $.each(data, function (i, item) {
                     $('#subcategory').append($('<option>', {
                         value: i,

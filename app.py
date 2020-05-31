@@ -2,16 +2,17 @@ from flask import Flask,render_template,url_for,request,session,redirect,flash, 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField
 from flask_login import LoginManager,UserMixin,login_user,login_required,current_user,logout_user
 from wtforms import StringField, PasswordField, SubmitField, SelectField,widgets, HiddenField, TextAreaField, MultipleFileField
-from wtforms.validators import DataRequired, length, InputRequired, EqualTo, Optional
+from wtforms.validators import DataRequired, length, InputRequired, EqualTo, Optional, ValidationError
 from flask_admin import Admin, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
-import datetime
+import datetime, re
 from flaskext.markdown import Markdown
 
 
-from werkzeug import security
+from werkzeug import security, secure_filename
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
@@ -74,10 +75,16 @@ class PostForm(FlaskForm):
     Id_Categories = [c.idg for c in categories]
     subcategories = Categories.query.filter(Categories.parent.in_(Id_Categories)).all()
     subcategories_choices = sorted([(c.little_name, c.real_name) for c in subcategories])
-    subcategory = SelectField('subcategory', choices=[('none','None'),('new','New')]+subcategories_choices,default = 'none',validators=[Optional()])
+    subcategory = SelectField('subcategory', choices=[('none','None')]+subcategories_choices,default = 'none',validators=[Optional()])
 
     Images = MultipleFileField('Images')
     content = TextAreaField("Contenu")
+
+    def validate_title(form,field):
+        print("On teste")
+        if BlogPost.query.filter_by(title=field.data).first() != None :
+            print("Erreur levée")
+            raise ValidationError("Le titre a déjà été utilisé !")
 
 
 ###____________________MODIFICATIONS DES VUES DE L'ADMIN POUR Flask-Admin_______________________###
@@ -118,30 +125,32 @@ def index():
 @app.route('/addpost', methods=['GET','POST'])
 @login_required
 def add_post():
+    # Formulaire d'ajout de Post
     form=PostForm()
-
     if form.validate_on_submit() :
-        print(form.course.data)
-        print(form.category.data)
-        print(form.subcategory.data)
         post=BlogPost(title=form.title.data,
                       course=form.course.data,
                       category=form.category.data,
                       subcategory= form.subcategory.data,
-                      content=form.content.data,
+                      content=format_markdown_links(form),
                       date=datetime.datetime.now())
-        print('ok')
+        for file in form.Images.data :
+            if file.filename != '' :
+                filename = secure_filename(file.filename)
+                path_to_save=f'static/upload/{form.course.data}'
+                if form.category.data !='none' :
+                    path_to_save+="/"+form.category.data
+                    if form.subcategory.data != 'none' :
+                        path_to_save += "/"+form.subcategory.data
+                file.save(path_to_save+"/"+filename)
         db.session.add(post)
         db.session.commit()
-
         post=BlogPost.query.filter_by(title=form.title.data).first()
+
         return redirect(url_for('view_post',post_id=post.id_post))
+
     else :
 
-        print("Ben non")
-        print(form.course.data)
-        print(form.category.data)
-        print(form.subcategory.data)
         return render_template('add_post.html',form=form,cats=get_child("Root"))
 
 @app.route('/update_addpost',methods=['POST'])
@@ -149,7 +158,6 @@ def update_addpost():
     if 'course' in request.form.keys():
         course = request.form['course']
         id_course = Categories.query.filter_by(little_name=course).first()
-        print(f"{id_course.idg}")
         cats = Categories.query.filter_by(parent=id_course.idg).all()
         rep={}
         for c in cats :
@@ -198,6 +206,30 @@ def get_child(r) :
     parent=Categories.query.filter_by(real_name=r).first()
     cats = Categories.query.filter_by(parent=parent.idg).all()
     return [c.real_name for c in sorted(cats)]
+
+
+def format_markdown_links(form) :
+    link_pattern = r'\[(.*?)\]\((.*?)\)'
+    url_pattern = r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
+    pattern_image = re.findall(link_pattern,form.content.data)
+    file_uploadeds=[file.filename for file in form.Images.data]
+    new_content=form.content.data
+    for rep in pattern_image :
+        print(f"found pattern {rep[1]}")
+        truerep=rep[1]
+        if re.search(url_pattern, truerep) is None:
+            print("Not a url")
+            path_to_save = f'../static/upload/{form.course.data}'
+            if form.category.data != 'none':
+                path_to_save += "/" + form.category.data
+                if form.subcategory.data != 'none':
+                    path_to_save += "/" + form.subcategory.data
+            print("New path done !")
+            new_content = re.sub(rep[1],path_to_save+"/"+rep[1], new_content)
+    return new_content
+
+
+
 
 
 if __name__ == '__main__':
