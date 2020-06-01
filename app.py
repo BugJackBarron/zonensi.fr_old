@@ -8,8 +8,10 @@ from wtforms import StringField, PasswordField, SubmitField, SelectField,widgets
 from wtforms.validators import DataRequired, length, InputRequired, EqualTo, Optional, ValidationError
 from flask_admin import Admin, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.contrib.fileadmin import FileAdmin
 import datetime, re
 from flaskext.markdown import Markdown
+import os
 
 
 from werkzeug import security, secure_filename
@@ -86,6 +88,18 @@ class PostForm(FlaskForm):
             print("Erreur levée")
             raise ValidationError("Le titre a déjà été utilisé !")
 
+    def validate_content(form,field):
+        link_pattern = r'\[(.*?)\]\((.*?)\)'
+        url_pattern = r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
+        pattern_image = re.findall(link_pattern, form.content.data)
+        uploaded_files =[f.filename for f in form.Images.data]
+        for rep in pattern_image :
+            truerep = rep[1]
+            if (re.search(url_pattern, truerep) is None) and (truerep not in uploaded_files) :
+                raise ValidationError('Un fichier est manquant')
+
+
+
 
 ###____________________MODIFICATIONS DES VUES DE L'ADMIN POUR Flask-Admin_______________________###
 
@@ -108,6 +122,8 @@ admin = Admin(app, index_view=MyAdminIndexView())
 admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(BlogPost, db.session))
 admin.add_view(ModelView(Categories, db.session))
+path = os.path.join(os.path.dirname(__file__), 'static')
+admin.add_view(FileAdmin(path, '/static/', name='Static Files'))
 
 
 ###__________________LOGIN MANAGER POUR Flask-Login____________________________###
@@ -127,6 +143,7 @@ def index():
 def add_post():
     # Formulaire d'ajout de Post
     form=PostForm()
+    print(form.errors)
     if form.validate_on_submit() :
         post=BlogPost(title=form.title.data,
                       course=form.course.data,
@@ -150,7 +167,7 @@ def add_post():
         return redirect(url_for('view_post',post_id=post.id_post))
 
     else :
-
+        print(form.errors)
         return render_template('add_post.html',form=form,cats=get_child("Root"))
 
 @app.route('/update_addpost',methods=['POST'])
@@ -212,7 +229,6 @@ def format_markdown_links(form) :
     link_pattern = r'\[(.*?)\]\((.*?)\)'
     url_pattern = r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
     pattern_image = re.findall(link_pattern,form.content.data)
-    file_uploadeds=[file.filename for file in form.Images.data]
     new_content=form.content.data
     for rep in pattern_image :
         print(f"found pattern {rep[1]}")
