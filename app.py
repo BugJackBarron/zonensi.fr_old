@@ -2,7 +2,7 @@ from flask import Flask,render_template,url_for,request,session,redirect,flash, 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField
+
 from flask_login import LoginManager,UserMixin,login_user,login_required,current_user,logout_user
 from wtforms import StringField, PasswordField, SubmitField, SelectField,widgets, HiddenField, TextAreaField, MultipleFileField
 from wtforms.validators import DataRequired, length, InputRequired, EqualTo, Optional, ValidationError
@@ -42,6 +42,7 @@ class BlogPost(db.Model) :
     subcategory = db.Column(db.String(40))
     content = db.Column(db.Text)
     date=db.Column(db.DateTime)
+    tags = db.Column(db.Text)
 
 
 class Categories(db.Model) :
@@ -54,6 +55,22 @@ class Categories(db.Model) :
     def __lt__(self, other):
         return self.idg<other.idg
 
+
+class Quizz(db.Model):
+    id = db.Column(db.Integer,primary_key=True)
+    name = db.Column(db.String(40))
+    items = db.Column(db.Text)
+    categories = db.Column(db.Text)
+    tags = db.Column(db.Text)
+
+
+class QuizzItems(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.Text)
+    propositions = db.Column(db.Text)
+    valideProps = db.Column(db.String(40))
+    image = db.Column(db.String(40))
+    categories = db.Column(db.Text)
 
 ###________________FORMULAIRES WTFORMS______________________________###
 
@@ -83,9 +100,7 @@ class PostForm(FlaskForm):
     content = TextAreaField("Contenu")
 
     def validate_title(form,field):
-        print("On teste")
         if BlogPost.query.filter_by(title=field.data).first() != None :
-            print("Erreur levée")
             raise ValidationError("Le titre a déjà été utilisé !")
 
     def validate_content(form,field):
@@ -155,7 +170,7 @@ def add_post():
             if file.filename != '' :
                 filename = secure_filename(file.filename)
                 path_to_save=f'static/upload/{form.course.data}'
-                if form.category.data !='none' :
+                if form.category.data !='none' :s
                     path_to_save+="/"+form.category.data
                     if form.subcategory.data != 'none' :
                         path_to_save += "/"+form.subcategory.data
@@ -167,7 +182,6 @@ def add_post():
         return redirect(url_for('view_post',post_id=post.id_post))
 
     else :
-        print(form.errors)
         return render_template('add_post.html',form=form,cats=get_child("Root"))
 
 @app.route('/update_addpost',methods=['POST'])
@@ -190,11 +204,13 @@ def update_addpost():
         return jsonify(rep)
     else :
         return jsonify({'error' : 'Une erreur est survenue'})
-    
+
+
 @app.route('/viewpost/<int:post_id>')
 def view_post(post_id):
     post=BlogPost.query.filter_by(id_post=post_id).first()
     return render_template('one_post.html', post=post,cats=get_child("Root"))
+
 
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -210,6 +226,7 @@ def login():
                     return redirect(url_for('index'))
             flash(u'La combinaison login/mot de passe est inconnue!')
     return render_template("login.html",form=form,cats=get_child("Root"))
+
 
 @app.route('/logout')
 @login_required
