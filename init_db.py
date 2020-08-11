@@ -85,3 +85,7 @@ for ln, rn in cat[::-1]:
 
 def find_children(idg):
     return Categories.query.filter_by(parent=idg).order_by(Categories.idg).all()
+
+
+
+db.close_all_sessions()

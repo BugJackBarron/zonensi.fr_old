@@ -4,7 +4,7 @@ from sqlalchemy import desc
 from flask_wtf import FlaskForm
 
 from flask_login import LoginManager,UserMixin,login_user,login_required,current_user,logout_user
-from wtforms import StringField, PasswordField, SubmitField, SelectField,widgets, HiddenField, TextAreaField, MultipleFileField
+from wtforms import StringField, PasswordField, SubmitField, SelectField,widgets, HiddenField, TextAreaField, MultipleFileField, FieldList
 from wtforms.validators import DataRequired, length, InputRequired, EqualTo, Optional, ValidationError
 from flask_admin import Admin, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
@@ -59,6 +59,7 @@ class Categories(db.Model) :
 class Quizz(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.String(40))
+    nbItems = db.Column(db.Integer)
     items = db.Column(db.Text)
     categories = db.Column(db.Text)
     tags = db.Column(db.Text)
@@ -79,6 +80,10 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
 
 class PostForm(FlaskForm):
+    #########################################################
+    # Classe à désactiver si relance de la création de la   #
+    # BDD                                                   #
+    #########################################################
     title = StringField('Titre', validators=[DataRequired()])
     #peuplement des valeurs possibles des sélections,
     # nécessaires pour utilisation de validate_on_submit
@@ -114,6 +119,10 @@ class PostForm(FlaskForm):
                 raise ValidationError('Un fichier est manquant')
 
 
+class CreateQuizz(FlaskForm) :
+    title = StringField('Titre', validators=[DataRequired()])
+    itemList = FieldList(StringField())
+    submit = SubmitField('Submit')
 
 
 ###____________________MODIFICATIONS DES VUES DE L'ADMIN POUR Flask-Admin_______________________###
@@ -137,6 +146,8 @@ admin = Admin(app, index_view=MyAdminIndexView())
 admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(BlogPost, db.session))
 admin.add_view(ModelView(Categories, db.session))
+admin.add_view(ModelView(Quizz, db.session))
+admin.add_view(ModelView(QuizzItems, db.session))
 path = os.path.join(os.path.dirname(__file__), 'static')
 admin.add_view(FileAdmin(path, '/static/', name='Static Files'))
 
@@ -149,7 +160,6 @@ def load_user(id):
 
 @app.route('/')
 def index():
-
     return render_template('squelette.html',cats=get_child("Root"))
 
 
@@ -170,7 +180,7 @@ def add_post():
             if file.filename != '' :
                 filename = secure_filename(file.filename)
                 path_to_save=f'static/upload/{form.course.data}'
-                if form.category.data !='none' :s
+                if form.category.data != 'none' :
                     path_to_save+="/"+form.category.data
                     if form.subcategory.data != 'none' :
                         path_to_save += "/"+form.subcategory.data
@@ -233,6 +243,13 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.route('/addquizz',methods=['GET','POST'])
+@login_required
+def addquizz():
+    form = CreateQuizz()
+    return render_template("add_quizz.html", form=form,cats=get_child("Root"))
 
 
 @app.template_filter('getchild')
