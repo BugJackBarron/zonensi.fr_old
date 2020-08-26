@@ -30,7 +30,11 @@
             <div class="w3-quarter">
                 <p class="w3-center">{%block login%}
                    {% if current_user.is_authenticated %}
-                        <p class=""> {{ current_user.login }}
+                       {% if current_user.login=="admin" %}
+                           <p class=""> <a href={{ url_for('admin.index') }}>{{ current_user.login }}</a>
+                       {% else %}
+                           <p class=""> {{ current_user.login }}
+                        {% endif %}
                         <a class="" href="{{ url_for('logout')}}"> Déconnexion</a></p>
 
                     {% else %}

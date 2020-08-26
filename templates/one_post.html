@@ -3,7 +3,10 @@
 {% block contenu %}
     <h1 class="w3-center w3-flat-sun-flower-txt">{{ post.title }}</h1>
 
-    <h4 class="w3-right-align w3-flat-sun-flower-txt">{{ post.course }}</h4>
+    <h4 class="w3-right-align w3-flat-sun-flower-txt">{{ post.course }}
+    {%  if post.category != 'none' %} -> {{ post.category }} {% endif %}
+    {%  if post.subcategory != 'none' %} -> {{ post.subcategory }} {% endif %}
+    </h4>
 
     <div class="w3-flat-sun-flower-txt">
         {{ post.content|markdown }}

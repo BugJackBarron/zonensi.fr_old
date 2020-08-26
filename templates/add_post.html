@@ -81,6 +81,7 @@
                 data: {course: course_selected}
             })
             .done(function(data){
+                console.log(data);
                 $('#category').prop('disabled',false);
                 $('#category').empty().append($('<option>', {
                         value: 'none',
@@ -98,10 +99,11 @@
 
         $("#category").change(function () {
             var category_selected = $(this).val();
+            var course_selected = $('#course').val();
                 req = $.ajax({
                 url: '/update_addpost',
                 type: 'POST',
-                data: {category: category_selected}
+                data: {category: category_selected, course : course_selected}
             })
             .done(function(data){
                 console.log(data);

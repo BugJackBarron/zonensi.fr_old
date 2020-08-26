@@ -1,17 +1,6 @@
 from app import db, User, Categories
+import config_app
 import os
-
-
-if os.path.exists('static/zonensidb.sqlite3'):
-    os.remove('static/zonensidb.sqlite3')
-db.create_all()
-user = User(login="admin", password='1234')
-db.session.add(user)
-db.session.commit()
-racine = Categories(little_name='root', real_name='Root', parent=None, idg=1, idd=2)
-db.session.add(racine)
-
-db.session.commit()
 
 
 def add_category(little_name, real_name, parent=1):
@@ -27,6 +16,27 @@ def add_category(little_name, real_name, parent=1):
     db.session.commit()
 
 
+def find_children(idg):
+    return Categories.query.filter_by(parent=idg).order_by(Categories.idg).all()
+
+##Main###
+print("Creating and adding admin...")
+if os.path.exists('static/zonensidb.sqlite3'):
+    os.remove('static/zonensidb.sqlite3')
+db.create_all()
+user = User(login=config_app.admin_login, password=config_app.admin_pwd)
+db.session.add(user)
+db.session.commit()
+racine = Categories(little_name='root', real_name='Root', parent=None, idg=1, idd=2)
+db.session.add(racine)
+
+db.session.commit()
+print("Done !")
+
+
+
+print("Creating and adding Top categories...")
+
 course = [('maths', 'Mathématiques'), ('snt', 'SNT'), ('nsi', 'NSI'), ('enssci', 'Enseignement Scientifique'),
           ('misc', 'Miscellanées')]
 
@@ -37,7 +47,9 @@ for ln, rn in course[::-1]:
             os.mkdir(f"static/upload/{ln}")
         except:
             raise IOError
+print("Done !")
 
+print("Creating and adding Maths sub categories...")
 num = Categories.query.filter_by(little_name="maths").first().idg
 cat = [('2de', 'Seconde'), ('1ereG', 'Première Générale'), ('TleG', 'Terminale Générale'),
        ('1ereT', 'Première Technologique'),
@@ -50,6 +62,7 @@ for ln, rn in cat[::-1]:
             os.mkdir(f"static/upload/maths/{ln}")
         except:
             raise IOError
+print("Creating and adding NSI sub categories...")
 
 num = Categories.query.filter_by(little_name="nsi").first().idg
 cat = [('1ereG', 'Première Générale'), ('TleG', 'Terminale Générale'), ('cultinfo', 'Culture Informatique')]
@@ -61,6 +74,8 @@ for ln, rn in cat[::-1]:
         except:
             raise IOError
 
+print("Creating and adding MISC sub categories...")
+
 num = Categories.query.filter_by(little_name="misc").first().idg
 cat = [('python', 'Python'), ('web', 'Web'), ('reseaux', 'Réseaux'),('linux','Linux')]
 for ln, rn in cat[::-1]:
@@ -71,20 +86,36 @@ for ln, rn in cat[::-1]:
         except:
             raise IOError
 
+print("Creating and adding sub-sub categories...")
 
-num = Categories.query.filter_by(little_name="2de").first().idg
-cat = [('C01', 'C01'), ('C02', 'C02'), ('C03', 'C03')]
-for ln, rn in cat[::-1]:
-    add_category(ln, rn, parent=num)
-    if not (os.path.exists(f"static/upload/maths/2de/{ln}")):
-        try:
-            os.mkdir(f"static/upload/maths/2de/{ln}")
-        except:
-            raise IOError
+for parent,course in [('maths','2de'), ('maths','mathcomp'),(None,'snt'), (None,'enssci'),('nsi','1ereG') ] :
+    if parent !=None :
+        parent_idg = Categories.query.filter_by(little_name=parent).first().idg
+        num = Categories.query.filter_by(little_name=course,parent=parent_idg).first().idg
+        # Création des différents chapitres
+        cat = [(f'C{i//10}{i%10}',)*2 for i in range(1,16)]
+        for ln, rn in cat[::-1]:
+            add_category(ln, rn, parent=num)
+            if not (os.path.exists(f"static/upload/{parent}/{course}/{ln}")):
+                try:
+                    os.mkdir(f"static/upload/{parent}/{course}/{ln}")
+                except:
+                    raise IOError
+    else :
+        num = Categories.query.filter_by(little_name=course).first().idg
+        # Création des différents chapitres
+        cat = [(f'C{i // 10}{i % 10}',) * 2 for i in range(1, 16)]
+        for ln, rn in cat[::-1]:
+            add_category(ln, rn, parent=num)
+            if not (os.path.exists(f"static/upload/{course}/{ln}")):
+                try:
+                    os.mkdir(f"static/upload/{course}/{ln}")
+                except:
+                    raise IOError
+    print('Done for {parent}/{course}...')
 
+print('Finished')
 
-def find_children(idg):
-    return Categories.query.filter_by(parent=idg).order_by(Categories.idg).all()
 
 
 
