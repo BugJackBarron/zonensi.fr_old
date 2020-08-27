@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from flask import Flask,render_template,url_for,request,session,redirect,flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import desc
+from sqlalchemy import desc, ForeignKey, or_, and_
 from flask_wtf import FlaskForm
 
 from flask_login import LoginManager,UserMixin,login_user,login_required,current_user,logout_user
@@ -21,9 +23,9 @@ from werkzeug import security, secure_filename
 import config_app
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = config_app.secret_key
+app.config['SECRET_KEY'] = config_app.SECRET_KEY
 app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = config_app.bdd_file
+app.config['SQLALCHEMY_DATABASE_URI'] = config_app.BDD_FILE
 
 ###________CONFIGURATION DES MODULES_____________###
 db=SQLAlchemy(app)
@@ -32,21 +34,12 @@ login_manager.init_app(app)
 Markdown(app)
 
 ###_________________CLASSES DES TABLES POUR SQLALCHEMY________________________________###
+
+
 class User(UserMixin, db.Model) :
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(40), unique=True, nullable=False)
     password = db.Column(db.String(40), nullable=False)
-
-
-class BlogPost(db.Model) :
-    id_post = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(40), unique=True)
-    course = db.Column(db.String(40))
-    category = db.Column(db.String(40))
-    subcategory = db.Column(db.String(40))
-    content = db.Column(db.Text)
-    date=db.Column(db.DateTime)
-    tags = db.Column(db.Text)
 
 
 class Categories(db.Model) :
@@ -58,6 +51,20 @@ class Categories(db.Model) :
     isactive = db.Column(db.Boolean,default=True)
     def __lt__(self, other):
         return self.idg<other.idg
+
+
+class BlogPost(db.Model) :
+    id_post = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(40), unique=True)
+    course = db.Column(db.String(40))
+    category = db.Column(db.String(40))
+    subcategory = db.Column(db.String(40))
+    id_true_category = db.Column(db.Integer,ForeignKey(Categories.idg))
+    content = db.Column(db.Text)
+    date=db.Column(db.DateTime)
+    tags = db.Column(db.Text)
+
+
 
 
 class Quizz(db.Model):
@@ -107,6 +114,7 @@ class PostForm(FlaskForm):
 
     Images = MultipleFileField('Images')
     content = TextAreaField("Contenu")
+    tags = StringField('tags', validators=[length(max=150)])
 
     def validate_title(form,field):
         if BlogPost.query.filter_by(title=field.data).first() != None :
@@ -148,6 +156,7 @@ class MyModelView(ModelView):
 
     can_view_details = True
     column_display_pk = True
+    column_display_fk = True
 
     def is_accessible(self):
         if current_user.is_authenticated:
@@ -180,17 +189,82 @@ def load_user(id):
 @app.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly
-    return render_template('404.html',cats=get_child("Root")), 404
+    return render_template('404.html',cats=get_child(Categories.query.filter_by(real_name="Root").first().idg)), 404
+
+##                             FONCTIONS SPECIFIQUES                          ##
 
 
+def get_category_id(course,category='none',subcategory='none') :
+    """Give the idg of the given category ( categories are given with
+    their little name (ln )."""
+    try :
+        id_course= Categories.query.filter_by(little_name=course).first().idg
+    except :
+        return 1
+    if category == 'none' :
+        return id_course
+    else :
+        try :
+            id_category = Categories.query.filter_by(little_name=category, parent=id_course).first().idg
+        except :
+            return id_course
+        if subcategory == 'none' :
+            return id_category
+        else :
+            try :
+                return Categories.query.filter_by(little_name=subcategory, parent=id_category).first().idg
+            except :
+                return id_category
 
+
+# def get_post(category_id=1) :
+#     """Get all post from a given category"""
+#     page = request.args.get('page', 1, type=int)
+#     if category_id != 1 :
+#         posts =  BlogPost.query.filter_by(id_true_category=category_id).\
+#                 order_by(BlogPost.date.desc()).paginate(
+#             page,config_app.POST_PER_PAGE,False)
+#     else :
+#         posts = BlogPost.query.order_by(BlogPost.date.desc()).paginate(
+#                 page, config_app.POST_PER_PAGE, False)
+#         print(posts)
+#     next_url = url_for('index', page=posts.next_num) if posts.has_next else None
+#     prev_url = url_for('index', page=posts.prev_num) if posts.has_prev else None
+#     print(posts.items,prev_url,next_url)
+#     return posts.items,prev_url,next_url
+
+def get_post(course='root',category='none',subcategory='none') :
+    """Get all post from a given category"""
+    page = request.args.get('page', 1, type=int)
+    if subcategory != 'none' :
+        posts =  BlogPost.query.filter_by(course=course,category=category,subcategory=subcategory).\
+                order_by(BlogPost.date.desc()).paginate(
+            page,config_app.POST_PER_PAGE,False)
+    elif category != 'none' :
+        posts =  BlogPost.query.filter_by(course=course,category=category).\
+                order_by(BlogPost.date.desc()).paginate(
+            page,config_app.POST_PER_PAGE,False)
+    elif course!= 'root' :
+        posts = BlogPost.query.filter_by(course=course). \
+            order_by(BlogPost.date.desc()).paginate(
+            page, config_app.POST_PER_PAGE, False)
+    else :
+        posts = BlogPost.query.order_by(BlogPost.date.desc()).paginate(
+                page, config_app.POST_PER_PAGE, False)
+    posts = posts if posts !=[] else None
+    next_url = url_for('index', page=posts.next_num) if posts.has_next else None
+    prev_url = url_for('index', page=posts.prev_num) if posts.has_prev else None
+    return posts.items,prev_url,next_url
+
+@app.context_processor
+def getposts() :
+    return dict(get_post=get_post)
 
 
 @app.template_filter('getchild')
 def get_child(r) :
-    parent=Categories.query.filter_by(real_name=r).first()
-    cats = Categories.query.filter_by(parent=parent.idg).all()
-    return [c.real_name for c in sorted(cats) if c.isactive]
+    cats = Categories.query.filter_by(parent=r).all()
+    return [c for c in sorted(cats) if c.isactive]
 
 
 def format_markdown_links(form) :
@@ -217,13 +291,60 @@ def format_markdown_links(form) :
 
 @app.route('/')
 def index():
-    return render_template('squelette.html',cats=get_child("Root"))
+    posts, prev_url, next_url = get_post()
+    print(posts)
+    return render_template('index.html',
+                           cats=get_child(Categories.query.filter_by(real_name="Root").first().idg),
+                           posts=posts,
+                           prev_url=prev_url,
+                           next_url=next_url
+                           )
+
+
+@app.route('/viewcategory/<course>')
+@app.route('/viewcategory/<course>/<category>')
+@app.route('/viewcategory/<course>/<category>/<subcategory>')
+def viewcategory(course,category='none',subcategory='none'):
+    posts, prev_url, next_url = get_post(course,category,subcategory)
+    print(posts)
+    return render_template('index.html',
+                           cats=get_child(Categories.query.filter_by(real_name="Root").first().idg),
+                           posts=posts,
+                           prev_url=prev_url,
+                           next_url=next_url
+                           )
 
 
 @app.route('/viewpost/<int:post_id>')
 def view_post(post_id):
     post=BlogPost.query.filter_by(id_post=post_id).first()
-    return render_template('one_post.html', post=post,cats=get_child("Root"))
+    return render_template('one_post.html', post=post,cats=get_child(Categories.query.filter_by(real_name="Root").first().idg))
+
+
+@app.route('/search_by_tag',methods=['GET', 'POST'])
+def search_by_tag() :
+    data=request.form['search'].lower()
+    page = request.args.get('page', 1, type=int)
+    if "+" in data :
+        words = [w.strip() for w in re.split(',|;| |\+', data) if w != ""]
+        words = set(words) -set("+")
+        print(words)
+        posts = BlogPost.query.filter(and_(BlogPost.tags.like(f"%{w}%") for w in words)).order_by(BlogPost.date.desc()).paginate(
+                page,config_app.POST_PER_PAGE,False)
+    else :
+        words = [w.strip() for w in re.split(',|;| ', data) if w != ""]
+        posts = BlogPost.query.filter(or_(BlogPost.tags.like(f"%{w}%") for w in words)).order_by(
+            BlogPost.date.desc()).paginate(
+            page, config_app.POST_PER_PAGE, False)
+    print(posts.items)
+    next_url = url_for('index', page=posts.next_num) if posts.has_next else None
+    prev_url = url_for('index', page=posts.prev_num) if posts.has_prev else None
+    return render_template('index.html',
+                           cats=get_child(Categories.query.filter_by(real_name="Root").first().idg),
+                           posts=posts.items,
+                           prev_url=prev_url,
+                           next_url=next_url
+                           )
 
 
 @app.route('/login',methods=['GET','POST'])
@@ -239,7 +360,7 @@ def login():
                 else :
                     return redirect(url_for('index'))
             flash(u'La combinaison login/mot de passe est inconnue!')
-    return render_template("login.html",form=form,cats=get_child("Root"))
+    return render_template("login.html",form=form,cats=get_child(Categories.query.filter_by(real_name="Root").first().idg))
 
 @app.route('/addpost', methods=['GET','POST'])
 @login_required
@@ -248,12 +369,16 @@ def add_post():
     form=PostForm()
     print(form.errors)
     if form.validate_on_submit() :
+
         post=BlogPost(title=form.title.data,
                       course=form.course.data,
                       category=form.category.data,
                       subcategory= form.subcategory.data,
+                      id_true_category= get_category_id(form.course.data,form.category.data,form.subcategory.data),
                       content=format_markdown_links(form),
-                      date=datetime.datetime.now())
+                      date=datetime.datetime.now(),
+                      tags=form.tags.data.lower())
+
         for file in form.Images.data :
             if file.filename != '' :
                 filename = secure_filename(file.filename)
@@ -270,7 +395,7 @@ def add_post():
         return redirect(url_for('view_post',post_id=post.id_post))
 
     else :
-        return render_template('add_post.html',form=form,cats=get_child("Root"))
+        return render_template('add_post.html',form=form,cats=get_child(Categories.query.filter_by(real_name="Root").first().idg))
 
 @app.route('/update_addpost',methods=['POST'])
 @login_required
@@ -314,7 +439,7 @@ def logout():
 @login_required
 def add_quizz():
     form = CreateQuizz()
-    return render_template("add_quizz.html", form=form,cats=get_child("Root"))
+    return render_template("add_quizz.html", form=form,cats=get_child(Categories.query.filter_by(real_name="Root").first().idg))
 
 
 

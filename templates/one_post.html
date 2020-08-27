@@ -1,12 +1,15 @@
 {% extends 'squelette.html' %}
 
 {% block contenu %}
-    <h1 class="w3-center w3-flat-sun-flower-txt">{{ post.title }}</h1>
 
-    <h4 class="w3-right-align w3-flat-sun-flower-txt">{{ post.course }}
-    {%  if post.category != 'none' %} -> {{ post.category }} {% endif %}
-    {%  if post.subcategory != 'none' %} -> {{ post.subcategory }} {% endif %}
-    </h4>
+
+   <h1 class="w3-center w3-flat-sun-flower-txt "><a class="w3-hover-amethyst " href="{{ url_for('view_post',post_id = post.id_post) }}">{{ post.title }}</a></h1>
+
+        <h4 class="w3-right-align w3-flat-sun-flower-txt"><a class="w3-hover-amethyst" href="{{ url_for('viewcategory', course = post.course)  }}">{{ post.course }}</a>
+        {%  if post.category != 'none' %} ->
+            <a class="w3-hover-amethyst" href="{{ url_for('viewcategory',course=post.course, category=post.category) }}">{{ post.category }}</a> {% endif %}
+        {%  if post.subcategory != 'none' %} -> <a class="w3-hover-amethyst" href="{{ url_for('viewcategory',course=post.course, category=post.category,subcategory=post.subcategory) }}">{{ post.subcategory }}</a> {% endif %}
+        </h4>
 
     <div class="w3-flat-sun-flower-txt">
         {{ post.content|markdown }}
@@ -15,22 +18,3 @@
 {% endblock %}
 
 
-{% block scripts %}
-       <script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_CHTML"></script>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-tex2jax: {
-inlineMath: [['$','$'], ['\\(','\\)']],
-processEscapes: true},
-jax: ["input/TeX","input/MathML","input/AsciiMath","output/CommonHTML"],
-extensions: ["tex2jax.js","mml2jax.js","asciimath2jax.js","MathMenu.js","MathZoom.js","AssistiveMML.js", "[Contrib]/a11y/accessibility-menu.js"],
-TeX: {
-extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"],
-equationNumbers: {
-autoNumber: "AMS"
-}
-}
-});
-</script>
-{% endblock %}

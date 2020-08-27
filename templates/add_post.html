@@ -23,23 +23,26 @@
         <div class="w3-center">
         {{ form.csrf_token }}
         <p class="w3-flat-sun-flower-txt">
-            {{ form.title.label }}{{ form.title(size=32) }}
+            {{ form.title.label }}  {{ form.title(size=32) }}
         </p>
         <div class="w3-bar">
             <div class="w3-bar-item w3-flat-sun-flower-txt">
-                {{ form.course.label }}{{ form.course() }}
+                {{ form.course.label }}  {{ form.course() }}
             </div>
             <div class="w3-bar-item w3-flat-sun-flower-txt">
-                {{ form.category.label }}{{ form.category() }}
+                {{ form.category.label }}  {{ form.category() }}
             </div>
             <div class="w3-bar-item w3-flat-sun-flower-txt">
-                {{ form.subcategory.label }}{{ form.subcategory() }}
+                {{ form.subcategory.label }}  {{ form.subcategory() }}
             </div>
 
         </div>
         </div>
         <p class="w3-flat-sun-flower-txt">
             {{ form.content() }}
+        </p>
+        <p class="w3-flat-sun-flower-txt">
+            {{ form.tags.label }}  {{ form.tags(size=100) }}
         </p>
         <div class="w3-flat-sun-flower-txt">
             {{ form.Images.label }}{{ form.Images() }}
@@ -51,6 +54,7 @@
 {%  endblock %}
 
 {% block scripts %}
+    {{  super()}}
     <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
 
     <!-- Start simple MDE -->
@@ -73,9 +77,14 @@
                     }));
         $('#subcategory').prop('disabled','disabled');
 
+        $('#title').change(function(){
+            $('#tags').val($('#tags').val()+" "+$(this).val());
+        });
+
         $("#course").change(function () {
             var course_selected = $(this).val();
-                req = $.ajax({
+            $('#tags').val($('#tags').val()+" "+course_selected);
+;                req = $.ajax({
                 url: '/update_addpost',
                 type: 'POST',
                 data: {course: course_selected}
@@ -100,6 +109,7 @@
         $("#category").change(function () {
             var category_selected = $(this).val();
             var course_selected = $('#course').val();
+            $('#tags').val($('#tags').val()+" "+category_selected);
                 req = $.ajax({
                 url: '/update_addpost',
                 type: 'POST',
@@ -120,6 +130,10 @@
                     }));
                 });
             });
+        });
+
+        $("#subcategory").change(function () {
+            $('#tags').val($('#tags').val()+" "+$(this).val());
         });
     });
 

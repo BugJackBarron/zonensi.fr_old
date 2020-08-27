@@ -1,3 +1,5 @@
+.w3-hover-amethyst{text-decoration: none;}
+
 
 .w3-hover-amethyst:hover{
     background-color:#9b59b6!important;
@@ -8,6 +10,14 @@
 .w3-border-belize-hole
 {border-color :#2980b9;
     border-width: 8px!important;
+
+}
+.w3-border-little-belize-hole
+{border-color :#2980b9;
+    border-width: 2px!important;
+    padding-top: 2em;
+    margin-top: 1em;
+    padding: inherit;
 
 }
 .w3-flat-turquoise
@@ -59,4 +69,23 @@
 
 .entete{
     position: fixed!important;
+}
+
+li {
+    list-style-type: none;
+}
+li:before{
+    content : "🌍 ";
+}
+
+li a{text-decoration : none;}
+
+li a:hover{background-color:#9b59b6;}
+
+
+sidebar,contenu{
+}
+
+.contenu,sidebar{
+    min-height: 100vh;
 }

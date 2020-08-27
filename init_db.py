@@ -3,7 +3,7 @@ import config_app
 import os
 
 
-def add_category(little_name, real_name, parent=1):
+def add_category(little_name, real_name, parent=1,isactive=True):
     father=Categories.query.filter_by(idg=parent).first()
     categories = Categories.query.all()
     for c in categories:
@@ -12,7 +12,7 @@ def add_category(little_name, real_name, parent=1):
         if c.parent !=None and c.parent> father.idg : c.parent+=2
         db.session.commit()
     db.session.add(
-        Categories(little_name=little_name, real_name=real_name, parent=parent, idg=parent + 1, idd=parent + 2))
+        Categories(little_name=little_name, real_name=real_name, parent=parent, idg=parent + 1, idd=parent + 2,isactive=isactive))
     db.session.commit()
 
 
@@ -24,7 +24,7 @@ print("Creating and adding admin...")
 if os.path.exists('static/zonensidb.sqlite3'):
     os.remove('static/zonensidb.sqlite3')
 db.create_all()
-user = User(login=config_app.admin_login, password=config_app.admin_pwd)
+user = User(login=config_app.ADMIN_LOGIN, password=config_app.ADMIN_PWD)
 db.session.add(user)
 db.session.commit()
 racine = Categories(little_name='root', real_name='Root', parent=None, idg=1, idd=2)
@@ -95,7 +95,7 @@ for parent,course in [('maths','2de'), ('maths','mathcomp'),(None,'snt'), (None,
         # Création des différents chapitres
         cat = [(f'C{i//10}{i%10}',)*2 for i in range(1,16)]
         for ln, rn in cat[::-1]:
-            add_category(ln, rn, parent=num)
+            add_category(ln, rn, parent=num,isactive=(ln=='C01'))
             if not (os.path.exists(f"static/upload/{parent}/{course}/{ln}")):
                 try:
                     os.mkdir(f"static/upload/{parent}/{course}/{ln}")
@@ -106,13 +106,13 @@ for parent,course in [('maths','2de'), ('maths','mathcomp'),(None,'snt'), (None,
         # Création des différents chapitres
         cat = [(f'C{i // 10}{i % 10}',) * 2 for i in range(1, 16)]
         for ln, rn in cat[::-1]:
-            add_category(ln, rn, parent=num)
+            add_category(ln, rn, parent=num,isactive=(ln=='C01'))
             if not (os.path.exists(f"static/upload/{course}/{ln}")):
                 try:
                     os.mkdir(f"static/upload/{course}/{ln}")
                 except:
                     raise IOError
-    print('Done for {parent}/{course}...')
+    print(f'Done for {parent}/f{course}...')
 
 print('Finished')
 
